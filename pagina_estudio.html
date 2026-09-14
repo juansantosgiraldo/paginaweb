@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fundamentos de la Ingeniería de Requisitos | Wash Spark Express</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .chart-container {
+      position: relative;
+      width: 100%;
+      max-width: 650px;
+      margin-left: auto;
+      margin-right: auto;
+      height: 320px;
+      max-height: 400px;
+    }
+    @media (min-width: 768px) {
+      .chart-container { height: 360px; }
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 bg-slate-50">
+
+  <!-- Placeholders Obligatorios según requerimiento -->
+  <!-- Chosen Palette: Slate & Indigo Academic Clarity -->
+  <!-- Application Structure Plan: Se diseñó una arquitectura de aplicación de 3 vistas principales: 1) Modo Diapositivas (presentación secuencial idéntica al temario original), 2) Dashboard de Estudio Interactivo (con simulador de costos 100x con Chart.js, juego de clasificación de requisitos, visualizador de las 4 fases y matriz de trazabilidad dinámica del proyecto Wash Spark Express), y 3) Simulador de Examen con retroalimentación inmediata. Esta estructura fue elegida para combinar el soporte directo de exposición en clase con el autoestudio práctico orientado a la maximización de nota en el examen de SENA ADSO. -->
+  <!-- Visualization & Content Choices: 
+    - Regla 100x (Multiplicador de Costo por Fase): Gráfico de barras de Chart.js en un elemento Canvas responsive. Justificación: Permite al usuario comprender de forma gráfica el impacto financiero de posponer la detección de errores de requerimientos.
+    - Clasificador de Requisitos: Componente interactivo Vanilla JS donde el usuario clasifica afirmaciones en Funcionales vs No Funcionales para verificar su comprensión teórica y del caso Wash Spark Express.
+    - Flujo de las 4 Fases de IR: Stepper interactivo estilizado con Tailwind CSS donde cada fase desplegará sus objetivos, entradas, salidas y estándares (como el IEEE 830).
+    - Matriz de Trazabilidad: Tabla dinámica interactiva que demuestra el mapa completo (Requisito -> Diagrama UML -> Modelo BD -> Código).
+    - Simulador de Examen: Cuestionario dinamizado por JS con calculador de puntuación y explicaciones justificadas.
+    - CONFIRMACIÓN: NO se usaron gráficos SVG ni librerías Mermaid JS. Todo se renderiza con Canvas (Chart.js), HTML semántico y CSS Tailwind. -->
+  <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+  <!-- TOP HEADER / NAV -->
+  <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">📋</span>
+          <div>
+            <h1 class="font-bold text-lg leading-tight">Ingeniería de Requisitos</h1>
+            <p class="text-xs text-indigo-200">Proyecto: Wash Spark Express • SENA ADSO</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex space-x-1 sm:space-x-2">
+          <button id="nav-slides" onclick="switchView('slides')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition bg-indigo-700 text-white flex items-center space-x-1">
+            <span>🖥️</span>
+            <span class="hidden md:inline">Presentación</span>
+          </button>
+          <button id="nav-dashboard" onclick="switchView('dashboard')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-indigo-200 hover:bg-indigo-800 hover:text-white flex items-center space-x-1">
+            <span>📊</span>
+            <span class="hidden md:inline">Dashboard Interactivo</span>
+          </button>
+          <button id="nav-quiz" onclick="switchView('quiz')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-indigo-200 hover:bg-indigo-800 hover:text-white flex items-center space-x-1">
+            <span>📝</span>
+            <span class="hidden md:inline">Simulador Examen</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: PRESENTACIÓN POR DIAPOSITIVAS      -->
+    <!-- ========================================== -->
+    <section id="view-slides" class="space-y-6">
+      
+      <!-- Slide Control Bar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200 gap-4">
+        <div class="flex items-center space-x-2">
+          <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-full">Modo Exposición</span>
+          <span id="slide-indicator" class="text-sm font-medium text-slate-600">Diapositiva 1 de 5</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="prevSlide()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition disabled:opacity-50" id="btn-prev-slide">
+            ⬅️ Anterior
+          </button>
+          <div class="flex space-x-1 px-2" id="slide-dots">
+            <!-- Dynamic dots -->
+          </div>
+          <button onclick="nextSlide()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition" id="btn-next-slide">
+            Siguiente ➡️
+          </button>
+        </div>
+      </div>
+
+      <!-- Slide Display Frame -->
+      <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-6 sm:p-10 min-h-[460px] flex flex-col justify-between">
+
+        <!-- Slide 1: Portada -->
+        <div id="slide-1" class="slide-content space-y-8 my-auto text-center py-6">
+          <div class="inline-block px-4 py-1.5 bg-indigo-50 border border-indigo-200 rounded-full text-indigo-700 font-semibold text-xs sm:text-sm tracking-wide uppercase">
+            SENA ADSO • Análisis y Desarrollo de Software
+          </div>
+          <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            Fundamentos de la <br class="hidden sm:inline"><span class="text-indigo-600">Ingeniería de Requisitos</span>
+          </h2>
+          <p class="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto font-normal">
+            Resumen Estratégico y Caso de Estudio Práctico para Examen Técnico
+          </p>
+          <div class="pt-6 border-t border-slate-100 inline-flex flex-wrap items-center justify-center gap-4 text-sm text-slate-500">
+            <span class="flex items-center space-x-1 bg-slate-100 px-3 py-1.5 rounded-lg">
+              <span>🚗</span>
+              <strong class="text-slate-700">Proyecto:</strong> Wash Spark Express
+            </span>
+            <span class="flex items-center space-x-1 bg-slate-100 px-3 py-1.5 rounded-lg">
+              <span>📚</span>
+              <strong class="text-slate-700">Enfoque:</strong> Estándar IEEE 830 & UML
+            </span>
+          </div>
+        </div>
+
+        <!-- Slide 2: Definición y Regla del 100x -->
+        <div id="slide-2" class="slide-content hidden space-y-6">
+          <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">¿Qué es la Ingeniería de Requisitos?</h2>
+            <span class="text-2xl">🎯</span>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-indigo-50/70 border border-indigo-100 p-5 rounded-xl space-y-2">
+              <div class="text-indigo-600 text-lg font-bold flex items-center space-x-2">
+                <span>⚙️</span>
+                <span>Definición Formal</span>
+              </div>
+              <p class="text-sm text-slate-700 leading-relaxed">
+                Es el <strong>proceso sistemático</strong> para descubrir, documentar y verificar qué funciones debe cumplir el software y bajo qué restricciones operará.
+              </p>
+            </div>
+
+            <div class="bg-amber-50/70 border border-amber-100 p-5 rounded-xl space-y-2">
+              <div class="text-amber-700 text-lg font-bold flex items-center space-x-2">
+                <span>⚠️</span>
+                <span>La Regla del 100x</span>
+              </div>
+              <p class="text-sm text-slate-700 leading-relaxed">
+                Un error de requisitos detectado cuando el sistema ya está en producción cuesta hasta <strong>100 veces más</strong> que si se soluciona en la fase inicial de análisis.
+              </p>
+            </div>
+
+            <div class="bg-emerald-50/70 border border-emerald-100 p-5 rounded-xl space-y-2">
+              <div class="text-emerald-700 text-lg font-bold flex items-center space-x-2">
+                <span>💡</span>
+                <span>Objetivo Principal</span>
+              </div>
+              <p class="text-sm text-slate-700 leading-relaxed">
+                Eliminar la <strong>ambigüedad</strong> entre las necesidades reales del negocio (Wash Spark Express) y lo que los desarrolladores van a programar.
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 text-white p-4 rounded-xl flex items-center space-x-4">
+            <span class="text-3xl">💡</span>
+            <p class="text-xs sm:text-sm text-slate-300">
+              <strong class="text-white">Clave para el examen:</strong> Los requerimientos no son simples peticiones de clientes, son <i>compromisos verificables y medibles</i> entre usuarios y desarrolladores.
+            </p>
+          </div>
+        </div>
+
+        <!-- Slide 3: Tipos de Requisitos -->
+        <div id="slide-3" class="slide-content hidden space-y-6">
+          <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Tipos de Requisitos</h2>
+            <span class="text-2xl">⚖️</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Funcionales -->
+            <div class="bg-white border-2 border-indigo-200 rounded-xl p-6 space-y-4 hover:shadow-md transition">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-indigo-900">Requisitos Funcionales</h3>
+                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-full">El "Qué"</span>
+              </div>
+              <p class="text-sm text-slate-600">
+                Definen las acciones lógicas, cálculos y operaciones exactas que el sistema debe llevar a cabo activamente.
+              </p>
+              <div class="bg-indigo-50 p-4 rounded-lg space-y-2 border-l-4 border-indigo-600">
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-900">Ejemplo en Wash Spark Express:</span>
+                <ul class="text-sm text-slate-700 space-y-1 list-disc list-inside">
+                  <li>Registrar la hora exacta de entrada del vehículo.</li>
+                  <li>Asignar una celda de parqueo según el tamaño.</li>
+                  <li>Calcular la tarifa sumando lavado y tiempo prestado.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- No Funcionales -->
+            <div class="bg-white border-2 border-purple-200 rounded-xl p-6 space-y-4 hover:shadow-md transition">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-purple-900">Requisitos No Funcionales</h3>
+                <span class="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full">El "Cómo"</span>
+              </div>
+              <p class="text-sm text-slate-600">
+                Definen los atributos de calidad, restricciones arquitectónicas, rendimiento, disponibilidad y seguridad.
+              </p>
+              <div class="bg-purple-50 p-4 rounded-lg space-y-2 border-l-4 border-purple-600">
+                <span class="text-xs font-bold uppercase tracking-wider text-purple-900">Ejemplo en Wash Spark Express:</span>
+                <ul class="text-sm text-slate-700 space-y-1 list-disc list-inside">
+                  <li>Cifrado seguro de contraseñas de los operarios (*hash*).</li>
+                  <li>Bases de datos relacionales seguras con backups.</li>
+                  <li>Tiempos de respuesta de liquidación menores a 2 segundos en caja.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: Las 4 Fases -->
+        <div id="slide-4" class="slide-content hidden space-y-6">
+          <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Las 4 Fases del Ciclo de IR</h2>
+            <span class="text-2xl">🔄</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Fase 1 -->
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 relative overflow-hidden">
+              <div class="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">1</div>
+              <h3 class="font-bold text-slate-900">Elicitación</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Recolección activa de información con los clientes y usuarios mediante entrevistas, observación directa en el establecimiento y encuestas.
+              </p>
+            </div>
+
+            <!-- Fase 2 -->
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 relative overflow-hidden">
+              <div class="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">2</div>
+              <h3 class="font-bold text-slate-900">Análisis</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Resolución de conflictos en la información recolectada, evaluación estricta de viabilidad técnica y priorización de funciones críticas.
+              </p>
+            </div>
+
+            <!-- Fase 3 -->
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 relative overflow-hidden">
+              <div class="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">3</div>
+              <h3 class="font-bold text-slate-900">Especificación</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Documentación formal y estructurada de los acuerdos del sistema utilizando normas internacionales como el <strong>estándar IEEE 830</strong>.
+              </p>
+            </div>
+
+            <!-- Fase 4 -->
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 relative overflow-hidden">
+              <div class="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">4</div>
+              <h3 class="font-bold text-slate-900">Validación</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Auditoría formal de los documentos producidos utilizando listas de chequeo para garantizar ausencia de vacíos lógicos o ambigüedades.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 5: Artefactos y Trazabilidad -->
+        <div id="slide-5" class="slide-content hidden space-y-6">
+          <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Artefactos y Trazabilidad</h2>
+            <span class="text-2xl">🔗</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white border border-slate-200 p-5 rounded-xl space-y-3 shadow-sm">
+              <div class="text-indigo-600 text-2xl">📐</div>
+              <h3 class="font-bold text-slate-900">Artefactos Visuales</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Transformación del texto escrito a modelos gráficos UML (Casos de Uso, Diagrama de Clases, Diagrama de Despliegue) y Modelos Entidad-Relación.
+              </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 p-5 rounded-xl space-y-3 shadow-sm">
+              <div class="text-indigo-600 text-2xl">🧩</div>
+              <h3 class="font-bold text-slate-900">Matriz de Trazabilidad</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Herramienta clave que vincula dinámicamente cada petición inicial del cliente con su diagrama de diseño y, finalmente, con una línea de código fuente.
+              </p>
+            </div>
+
+            <div class="bg-indigo-900 text-white p-5 rounded-xl space-y-3">
+              <div class="text-amber-400 text-2xl">🎯</div>
+              <h3 class="font-bold text-white">Propósito Fundamental</h3>
+              <p class="text-xs text-indigo-100 leading-relaxed">
+                Garantizar que todo requerimiento exigido se programe sin falta, y <strong>evitar programar funciones innecesarias</strong> que el cliente jamás solicitó.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide Footer Navigation Hints -->
+        <div class="pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+          <span>Usa los botones o flechas del teclado (⬅️ / ➡️)</span>
+          <span>Wash Spark Express • Guía de Examen</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: DASHBOARD DE ESTUDIO INTERACTIVO   -->
+    <!-- ========================================== -->
+    <section id="view-dashboard" class="hidden space-y-8">
+      
+      <!-- Section Intro Banner -->
+      <div class="bg-gradient-to-r from-indigo-900 to-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-md">
+        <h2 class="text-2xl sm:text-3xl font-extrabold mb-2">Dashboard Interactivo de Aprendizaje</h2>
+        <p class="text-indigo-200 text-sm sm:text-base max-w-3xl">
+          Esta sección desglosa de manera analítica e interactiva los contenidos del informe. Explora el simulador de costo de errores, clasifica requisitos del proyecto Wash Spark Express, profundiza en las 4 fases y audita la matriz de trazabilidad.
+        </p>
+      </div>
+
+      <!-- MODULE 1: SIMULADOR REGLA 100X -->
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div>
+          <div class="flex items-center space-x-2 text-indigo-600 text-sm font-bold uppercase tracking-wider mb-1">
+            <span>📊 Análisis Económico de Requisitos</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">La Regla del 100x: Multiplicador del Costo del Error</h3>
+          <p class="text-xs sm:text-sm text-slate-600 mt-1">
+            Esta visualización demuestra por qué la Ingeniería de Requisitos es crítica. Corregir una ambigüedad o vació técnico en la fase de análisis cuesta una fracción mínima en comparación a solucionar una falla con el sistema en producción.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <!-- Chart Container (Required Styling Rules) -->
+          <div class="lg:col-span-7 w-full">
+            <div class="chart-container">
+              <canvas id="costChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Interactive Calculator Widget -->
+          <div class="lg:col-span-5 bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-4">
+            <h4 class="font-bold text-slate-900 text-sm flex items-center space-x-2">
+              <span>🧮</span>
+              <span>Calculadora de Costo de Errores</span>
+            </h4>
+            <p class="text-xs text-slate-500">
+              Ingresa el costo base estimado para solucionar un error detectado durante las entrevistas de <strong>Elicitación / Análisis</strong>:
+            </p>
+            
+            <div class="space-y-2">
+              <label class="block text-xs font-semibold text-slate-700">Costo Base Inicial (USD $):</label>
+              <input type="number" id="base-cost-input" value="100" min="10" step="50" oninput="updateCostCalculator()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="p-3 bg-white rounded-lg border border-slate-200 space-y-2 text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-500">Costo en Especificación (3x):</span>
+                <span id="cost-spec" class="font-bold text-slate-700">$300 USD</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Costo en Codificación (20x):</span>
+                <span id="cost-code" class="font-bold text-amber-600">$2,000 USD</span>
+              </div>
+              <div class="flex justify-between pt-2 border-t border-slate-100">
+                <strong class="text-slate-900">Costo en Producción (100x):</strong>
+                <strong id="cost-prod" class="font-extrabold text-red-600">$10,000 USD</strong>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-slate-500 italic">
+              * Demuestra al docente que omitir la fase de diseño técnico destruye el presupuesto del software.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODULE 2: CLASIFICADOR DE REQUISITOS INTERACTIVO -->
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div>
+          <div class="flex items-center space-x-2 text-indigo-600 text-sm font-bold uppercase tracking-wider mb-1">
+            <span>🧩 Ejercicio Práctico de Dominio</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">Clasificador de Requisitos: Funcional vs No Funcional</h3>
+          <p class="text-xs sm:text-sm text-slate-600 mt-1">
+            En el examen técnico se evaluará la capacidad de diferenciar entre funciones del sistema (El "Qué") y atributos de calidad u homologación de arquitectura (El "Cómo"). Evalúa los casos prácticos de <strong>Wash Spark Express</strong> a continuación.
+          </p>
+        </div>
+
+        <!-- Interactive Flashcard Classifier -->
+        <div id="classifier-box" class="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-6 text-center">
+          <div class="inline-block px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-full" id="quiz-req-num">
+            Caso 1 de 6
+          </div>
+          
+          <div class="min-h-[80px] flex items-center justify-center">
+            <p id="quiz-req-text" class="text-base sm:text-lg font-semibold text-slate-800 px-4">
+              "El sistema debe registrar la hora exacta de ingreso del vehículo y asignar una celda de parqueo disponible."
+            </p>
+          </div>
+
+          <!-- Decision Buttons -->
+          <div class="flex justify-center space-x-4">
+            <button onclick="checkRequirementAnswer('RF')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg transition shadow-sm flex items-center space-x-2">
+              <span>⚙️</span>
+              <span>Requisito Funcional (Qué)</span>
+            </button>
+            <button onclick="checkRequirementAnswer('RNF')" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm rounded-lg transition shadow-sm flex items-center space-x-2">
+              <span>🛡️</span>
+              <span>Requisito No Funcional (Cómo)</span>
+            </button>
+          </div>
+
+          <!-- Feedback Box -->
+          <div id="classifier-feedback" class="hidden p-4 rounded-lg text-sm font-medium transition"></div>
+        </div>
+      </div>
+
+      <!-- MODULE 3: MAPA INTERACTIVO DE LAS 4 FASES -->
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div>
+          <div class="flex items-center space-x-2 text-indigo-600 text-sm font-bold uppercase tracking-wider mb-1">
+            <span>🔄 Metodología Paso a Paso</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">Profundización: Las 4 Fases del Ciclo de Vida</h3>
+          <p class="text-xs sm:text-sm text-slate-600 mt-1">
+            Haz clic en cada fase para explorar los instrumentos específicos (entrevistas, estándar IEEE 830, listas de chequeo) utilizados durante la elaboración del proyecto.
+          </p>
+        </div>
+
+        <!-- Interactive Phase Buttons -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button onclick="selectPhase(1)" id="phase-btn-1" class="p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold text-sm text-left transition space-y-1">
+            <div class="text-xs text-indigo-600">FASE 01</div>
+            <div>1. Elicitación</div>
+          </button>
+          <button onclick="selectPhase(2)" id="phase-btn-2" class="p-4 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm text-left transition space-y-1">
+            <div class="text-xs text-slate-400">FASE 02</div>
+            <div>2. Análisis</div>
+          </button>
+          <button onclick="selectPhase(3)" id="phase-btn-3" class="p-4 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm text-left transition space-y-1">
+            <div class="text-xs text-slate-400">FASE 03</div>
+            <div>3. Especificación</div>
+          </button>
+          <button onclick="selectPhase(4)" id="phase-btn-4" class="p-4 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm text-left transition space-y-1">
+            <div class="text-xs text-slate-400">FASE 04</div>
+            <div>4. Validación</div>
+          </button>
+        </div>
+
+        <!-- Dynamic Phase Detail Panel -->
+        <div id="phase-detail-panel" class="bg-slate-50 border border-slate-200 p-6 rounded-xl space-y-4">
+          <!-- Dynamic Content Loaded via JS -->
+        </div>
+      </div>
+
+      <!-- MODULE 4: MATRIZ DE TRAZABILIDAD DINÁMICA -->
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div>
+          <div class="flex items-center space-x-2 text-indigo-600 text-sm font-bold uppercase tracking-wider mb-1">
+            <span>🔗 Control de Cobertura de Código</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">Matriz de Trazabilidad Interactiva (Wash Spark Express)</h3>
+          <p class="text-xs sm:text-sm text-slate-600 mt-1">
+            La matriz de trazabilidad demuestra que no se programa nada que el cliente no haya pedido, y que ningún requisito se olvida durante la codificación.
+          </p>
+        </div>
+
+        <!-- Table Filters -->
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="text-xs font-semibold text-slate-500">Filtrar por Módulo:</span>
+          <button onclick="filterMatrix('all')" class="px-3 py-1 bg-indigo-900 text-white text-xs font-medium rounded-lg">Todos</button>
+          <button onclick="filterMatrix('Parqueo')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg">Parqueo</button>
+          <button onclick="filterMatrix('Facturación')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg">Facturación</button>
+          <button onclick="filterMatrix('Seguridad')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg">Seguridad</button>
+        </div>
+
+        <!-- Traceability Table -->
+        <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                <th class="p-3">ID Requisito</th>
+                <th class="p-3">Descripción Requerimiento</th>
+                <th class="p-3">Diagrama UML</th>
+                <th class="p-3">Modelo BD / Tabla</th>
+                <th class="p-3">Componente Código</th>
+              </tr>
+            </thead>
+            <tbody id="traceability-tbody" class="divide-y divide-slate-200 bg-white">
+              <!-- Dynamic Rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: SIMULADOR DE EXAMEN INTERACTIVO    -->
+    <!-- ========================================== -->
+    <section id="view-quiz" class="hidden space-y-8">
+      
+      <div class="bg-indigo-900 text-white p-6 sm:p-8 rounded-2xl shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <span class="px-3 py-1 bg-amber-400 text-indigo-950 text-xs font-extrabold rounded-full uppercase">Evaluación Diagnóstica</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold mt-2">Simulador de Examen Técnico</h2>
+          <p class="text-indigo-200 text-xs sm:text-sm mt-1">
+            Responde estas 5 preguntas representativas basadas en los temas de la presentación para medir tu nivel de preparación.
+          </p>
+        </div>
+        <div class="bg-indigo-800 p-4 rounded-xl text-center min-w-[140px] border border-indigo-700">
+          <div class="text-xs text-indigo-300 font-semibold">PUNTUACIÓN</div>
+          <div id="quiz-score-display" class="text-3xl font-extrabold text-amber-300">0 / 5</div>
+        </div>
+      </div>
+
+      <!-- Quiz Questions Container -->
+      <div id="quiz-container" class="space-y-6">
+        <!-- Questions rendered dynamically -->
+      </div>
+
+      <!-- Quiz Submit / Reset -->
+      <div class="flex justify-end space-x-4">
+        <button onclick="resetQuiz()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm rounded-xl transition">
+          🔄 Reiniciar Examen
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200 mt-auto py-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4">
+      Fundamentos de la Ingeniería de Requisitos • Proyecto Wash Spark Express • SENA ADSO
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // ==========================================
+    // STATE MANAGEMENT
+    // ==========================================
+    let currentSlide = 1;
+    const totalSlides = 5;
+    let costChartInstance = null;
+
+    // Requirement Classifier Data
+    const reqQuestions = [
+      {
+        text: '"El sistema debe registrar la hora exacta de ingreso del vehículo y asignar una celda de parqueo libre."',
+        type: 'RF',
+        explanation: '¡Correcto! Es un Requisito Funcional (RF) porque describe una acción lógica directa y un cálculo del sistema (El "Qué").'
+      },
+      {
+        text: '"Las contraseñas de los operarios deben almacenarse encriptadas mediante algoritmos de hash seguros."',
+        type: 'RNF',
+        explanation: '¡Correcto! Es un Requisito No Funcional (RNF) porque define un atributo de seguridad y arquitectura del sistema (El "Cómo").'
+      },
+      {
+        text: '"La pantalla de recepción en caja debe calcular el total a pagar en menos de 2 segundos."',
+        type: 'RNF',
+        explanation: '¡Correcto! Es un Requisito No Funcional (RNF) orientado al rendimiento y tiempo de respuesta.'
+      },
+      {
+        text: '"El sistema debe permitir seleccionar entre varios tipos de lavado (Básico, Especial, Ejecutivo)."',
+        type: 'RF',
+        explanation: '¡Correcto! Es un Requisito Funcional (RF) porque corresponde a una función y proceso de negocio directo.'
+      },
+      {
+        text: '"La base de datos relacional debe respaldarse diariamente y garantizar una disponibilidad del 99.9%."',
+        type: 'RNF',
+        explanation: '¡Correcto! Es un Requisito No Funcional (RNF) relacionado con la disponibilidad, fiabilidad y respaldos.'
+      },
+      {
+        text: '"El software debe generar un reporte diario en PDF con las ventas totales de la jornada."',
+        type: 'RF',
+        explanation: '¡Correcto! Es un Requisito Funcional (RF) porque requiere que el software ejecute la compilación y entrega de un reporte.'
+      }
+    ];
+    let currentReqIndex = 0;
+
+    // Phases Detail Data
+    const phaseData = {
+      1: {
+        title: 'Fase 1: Elicitación (Recolección)',
+        concept: 'Descubrimiento de necesidades implícitas y explícitas de los interesados.',
+        techniques: ['Entrevistas semiestructuradas con cajeros y administradores.', 'Observación directa del flujo de entrada de autos en el lavadero.', 'Encuestas de requerimientos de usuarios.'],
+        outputs: 'Lista inicial de necesidades, glosario de términos del negocio y mapa de actores.',
+        icon: '🔍'
+      },
+      2: {
+        title: 'Fase 2: Análisis y Negociación',
+        concept: 'Evaluación lógica de la información para resolver contradicciones y establecer prioridades.',
+        techniques: ['Clasificación de Requisitos (Funcional vs No Funcional).', 'Estudio de viabilidad técnica y operativa.', 'Priorización con técnica MoSCoW (Must, Should, Could, Won\'t).'],
+        outputs: 'Lista de requisitos priorizados y acuerdos sin conflictos entre usuarios y desarrolladores.',
+        icon: '⚖️'
+      },
+      3: {
+        title: 'Fase 3: Especificación',
+        concept: 'Documentación formal de los acuerdos mediante estándares de la industria.',
+        techniques: ['Documento de Especificación de Requisitos de Software bajo estándar IEEE 830.', 'Modelado UML: Diagramas de Casos de Uso, Diagramas de Clases.', 'Modelo Entidad-Relación para la base de datos.'],
+        outputs: 'Documento ERS (IEEE 830) firmado y artefactos de arquitectura visual.',
+        icon: '📐'
+      },
+      4: {
+        title: 'Fase 4: Validación',
+        concept: 'Auditoría estricta de los documentos antes de escribir la primera línea de código.',
+        techniques: ['Revisiones formales y walkthroughs.', 'Listas de chequeo de ambigüedad, consistencia y completitud.', 'Prototipado rápido de interfaces de usuario.'],
+        outputs: 'Requisitos aprobados listos para desarrollo sin vacíos lógicos.',
+        icon: '✅'
+      }
+    };
+
+    // Traceability Matrix Data
+    const matrixData = [
+      { id: 'RF-01', module: 'Parqueo', desc: 'Registrar ingreso de vehículo y asignar celda', uml: 'CU01: Registrar Ingreso', db: 'Tabla `vehiculos_parqueo`', code: 'ParqueoController.js' },
+      { id: 'RF-02', module: 'Facturación', desc: 'Calcular tarifa sumando tiempo y servicio lavado', uml: 'CU02: Liquidador de Caja', db: 'Tabla `tarifas` & `facturas`', code: 'BillingService.java' },
+      { id: 'RNF-01', module: 'Seguridad', desc: 'Cifrado de contraseñas de operarios', uml: 'Diag. Despliegue: Auth Node', db: 'Tabla `usuarios` (Columna hash)', code: 'PasswordEncoder.java' },
+      { id: 'RNF-02', module: 'Facturación', desc: 'Tiempo de respuesta en caja menor a 2s', uml: 'Diag. Secuencia: FastCheckout', db: 'Índices de BD optimizados', code: 'QueryOptimizer.sql' },
+      { id: 'RF-03', module: 'Parqueo', desc: 'Consultar celdas disponibles en tiempo real', uml: 'CU03: Dashboard Estado Celdas', db: 'Vista `v_celdas_libres`', code: 'SlotsStatusComponent.jsx' }
+    ];
+
+    // Quiz Questions Data
+    const examQuestions = [
+      {
+        q: '1. Según la "Regla del 100x", ¿cuándo resulta más costoso corregir un error en los requisitos?',
+        options: [
+          'En la fase de elicitación con el cliente',
+          'Durante la elaboración de diagramas UML',
+          'Cuando el sistema ya fue desplegado a producción',
+          'Durante la auditoría con listas de chequeo'
+        ],
+        correct: 2,
+        exp: 'La regla establece que un error no detectado a tiempo y llevado hasta producción cuesta hasta 100 veces más que solucionarlo en la fase inicial de análisis.'
+      },
+      {
+        q: '2. ¿Cuál de los siguientes es un ejemplo de Requisito NO Funcional para Wash Spark Express?',
+        options: [
+          'Calcular la tarifa total del parqueadero',
+          'Registrar la placa y la hora de entrada del vehículo',
+          'Cifrar las contraseñas de los usuarios con algoritmos seguros',
+          'Asignar una celda de parqueo según disponibilidad'
+        ],
+        correct: 2,
+        exp: 'El cifrado de contraseñas es un atributo de seguridad y calidad del sistema (El "Cómo"), por lo que es No Funcional.'
+      },
+      {
+        q: '3. ¿Qué estándar internacional se utiliza habitualmente para la fase de Especificación de Requisitos de Software?',
+        options: [
+          'ISO 9001',
+          'IEEE 830',
+          'Scrum Guide 2020',
+          'HTTP/2 Protocol'
+        ],
+        correct: 1,
+        exp: 'El estándar IEEE 830 estructurado proporciona la plantilla para la ERS (Especificación de Requisitos de Software).'
+      },
+      {
+        q: '4. ¿Cuál es el propósito fundamental de la Matriz de Trazabilidad?',
+        options: [
+          'Aumentar el costo del proyecto de software',
+          'Vincular cada requerimiento del cliente con su diagrama y su código fuente para evitar omisiones o funciones no pedidas',
+          'Sustituir la fase de pruebas de software',
+          'Diseñar la interfaz gráfica del sistema'
+        ],
+        correct: 1,
+        exp: 'La matriz garantiza que todo requerimiento exigido se programe y evita programar código innecesario.'
+      },
+      {
+        q: '5. ¿En qué fase del ciclo de IR se utilizan entrevistas y observación directa en el establecimiento?',
+        options: [
+          'Validación',
+          'Elicitación',
+          'Codificación',
+          'Despliegue'
+        ],
+        correct: 1,
+        exp: 'La Elicitación es la fase inicial de recolección de información directamente desde las fuentes o interesados.'
+      }
+    ];
+    let userQuizAnswers = {};
+
+    // ==========================================
+    // INITIALIZATION & VIEW SWITCHING
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initSlideDots();
+      renderSlide(currentSlide);
+      initCostChart();
+      selectPhase(1);
+      renderMatrixTable(matrixData);
+      renderExamQuiz();
+
+      // Keyboard navigation for slides
+      document.addEventListener('keydown', (e) => {
+        const slidesView = document.getElementById('view-slides');
+        if (!slidesView.classList.contains('hidden')) {
+          if (e.key === 'ArrowRight') nextSlide();
+          if (e.key === 'ArrowLeft') prevSlide();
+        }
+      });
+    });
+
+    function switchView(viewName) {
+      document.getElementById('view-slides').classList.add('hidden');
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-quiz').classList.add('hidden');
+
+      document.getElementById('nav-slides').className = 'px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-indigo-200 hover:bg-indigo-800 hover:text-white flex items-center space-x-1';
+      document.getElementById('nav-dashboard').className = 'px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-indigo-200 hover:bg-indigo-800 hover:text-white flex items-center space-x-1';
+      document.getElementById('nav-quiz').className = 'px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-indigo-200 hover:bg-indigo-800 hover:text-white flex items-center space-x-1';
+
+      if (viewName === 'slides') {
+        document.getElementById('view-slides').classList.remove('hidden');
+        document.getElementById('nav-slides').className = 'px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition bg-indigo-700 text-white flex items-center space-x-1';
+      } else if (viewName === 'dashboard') {
+        document.getElementById('view-dashboard').classList.remove('hidden');
+        document.getElementById('nav-dashboard').className = 'px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition bg-indigo-700 text-white flex items-center space-x-1';
+        if (costChartInstance) costChartInstance.update();
+      } else if (viewName === 'quiz') {
+        document.getElementById('view-quiz').classList.remove('hidden');
+        document.getElementById('nav-quiz').className = 'px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition bg-indigo-700 text-white flex items-center space-x-1';
+      }
+    }
+
+    // ==========================================
+    // SLIDE CAROUSEL LOGIC
+    // ==========================================
+    function initSlideDots() {
+      const container = document.getElementById('slide-dots');
+      container.innerHTML = '';
+      for (let i = 1; i <= totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = `w-2.5 h-2.5 rounded-full transition ${i === currentSlide ? 'bg-indigo-600 w-5' : 'bg-slate-300'}`;
+        dot.onclick = () => goToSlide(i);
+        container.appendChild(dot);
+      }
+    }
+
+    function renderSlide(index) {
+      for (let i = 1; i <= totalSlides; i++) {
+        document.getElementById(`slide-${i}`).classList.add('hidden');
+      }
+      document.getElementById(`slide-${index}`).classList.remove('hidden');
+      document.getElementById('slide-indicator').textContent = `Diapositiva ${index} de ${totalSlides}`;
+      document.getElementById('btn-prev-slide').disabled = (index === 1);
+      
+      initSlideDots();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        renderSlide(currentSlide);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        renderSlide(currentSlide);
+      }
+    }
+
+    function goToSlide(index) {
+      currentSlide = index;
+      renderSlide(currentSlide);
+    }
+
+    // ==========================================
+    // MODULE 1: CHART & CALCULATOR (100X RULE)
+    // ==========================================
+    function initCostChart() {
+      const ctx = document.getElementById('costChart').getContext('2d');
+      costChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Elicitación', 'Análisis', 'Especificación', 'Codificación', 'Producción'],
+          datasets: [{
+            label: 'Multiplicador de Costo por Fase',
+            data: [1, 3, 10, 25, 100],
+            backgroundColor: [
+              '#818cf8',
+              '#6366f1',
+              '#4f46e5',
+              '#f59e0b',
+              '#ef4444'
+            ],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` Multiplicador: ${context.raw}x del costo base`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Factor de Impacto de Costo (x)' }
+            }
+          }
+        }
+      });
+    }
+
+    function updateCostCalculator() {
+      const baseVal = parseFloat(document.getElementById('base-cost-input').value) || 0;
+      document.getElementById('cost-spec').textContent = `$${(baseVal * 3).toLocaleString()} USD`;
+      document.getElementById('cost-code').textContent = `$${(baseVal * 20).toLocaleString()} USD`;
+      document.getElementById('cost-prod').textContent = `$${(baseVal * 100).toLocaleString()} USD`;
+    }
+
+    // ==========================================
+    // MODULE 2: REQUIREMENT CLASSIFIER
+    // ==========================================
+    function checkRequirementAnswer(userChoice) {
+      const current = reqQuestions[currentReqIndex];
+      const feedbackEl = document.getElementById('classifier-feedback');
+      
+      feedbackEl.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-900', 'bg-red-100', 'text-red-900');
+
+      if (userChoice === current.type) {
+        feedbackEl.classList.add('bg-emerald-100', 'text-emerald-900');
+        feedbackEl.innerHTML = `<strong>✅ ${current.explanation}</strong>`;
+      } else {
+        feedbackEl.classList.add('bg-red-100', 'text-red-900');
+        feedbackEl.innerHTML = `<strong>❌ Respuesta incorrecta.</strong> La opción adecuada es ${current.type === 'RF' ? 'Requisito Funcional' : 'Requisito No Funcional'}. ${current.explanation}`;
+      }
+
+      setTimeout(() => {
+        currentReqIndex = (currentReqIndex + 1) % reqQuestions.length;
+        document.getElementById('quiz-req-num').textContent = `Caso ${currentReqIndex + 1} de ${reqQuestions.length}`;
+        document.getElementById('quiz-req-text').textContent = reqQuestions[currentReqIndex].text;
+        feedbackEl.classList.add('hidden');
+      }, 3000);
+    }
+
+    // ==========================================
+    // MODULE 3: 4 PHASES STEPPER
+    // ==========================================
+    function selectPhase(num) {
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`phase-btn-${i}`);
+        if (i === num) {
+          btn.className = 'p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold text-sm text-left transition space-y-1';
+        } else {
+          btn.className = 'p-4 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm text-left transition space-y-1';
+        }
+      }
+
+      const data = phaseData[num];
+      const panel = document.getElementById('phase-detail-panel');
+      panel.innerHTML = `
+        <div class="flex items-center space-x-3 border-b border-slate-200 pb-3">
+          <span class="text-3xl">${data.icon}</span>
+          <div>
+            <h4 class="font-bold text-slate-900 text-base">${data.title}</h4>
+            <p class="text-xs text-slate-500">${data.concept}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
+          <div class="bg-white p-3.5 rounded-lg border border-slate-200 space-y-2">
+            <strong class="text-indigo-900 uppercase tracking-wider text-[11px] block">Técnicas e Instrumentos:</strong>
+            <ul class="list-disc list-inside text-slate-700 space-y-1">
+              ${data.techniques.map(t => `<li>${t}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="bg-white p-3.5 rounded-lg border border-slate-200 space-y-2">
+            <strong class="text-emerald-900 uppercase tracking-wider text-[11px] block">Entregables y Artefactos:</strong>
+            <p class="text-slate-700 font-medium">${data.outputs}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // MODULE 4: TRACEABILITY MATRIX
+    // ==========================================
+    function renderMatrixTable(items) {
+      const tbody = document.getElementById('traceability-tbody');
+      tbody.innerHTML = '';
+      
+      items.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-indigo-600">${row.id}</td>
+          <td class="p-3 text-slate-800">${row.desc}</td>
+          <td class="p-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded font-mono text-[11px]">${row.uml}</span></td>
+          <td class="p-3"><span class="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded font-mono text-[11px]">${row.db}</span></td>
+          <td class="p-3"><span class="px-2 py-0.5 bg-slate-100 text-slate-700 font-mono text-[11px]">${row.code}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterMatrix(mod) {
+      if (mod === 'all') {
+        renderMatrixTable(matrixData);
+      } else {
+        const filtered = matrixData.filter(m => m.module === mod);
+        renderMatrixTable(filtered);
+      }
+    }
+
+    // ==========================================
+    // VIEW 3: SIMULADOR DE EXAMEN LOGIC
+    // ==========================================
+    function renderExamQuiz() {
+      const container = document.getElementById('quiz-container');
+      container.innerHTML = '';
+
+      examQuestions.forEach((q, qIndex) => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4';
+        
+        let optionsHTML = q.options.map((opt, oIndex) => `
+          <label onclick="selectQuizOption(${qIndex}, ${oIndex})" class="flex items-center space-x-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition" id="opt-card-${qIndex}-${oIndex}">
+            <input type="radio" name="q-${qIndex}" value="${oIndex}" class="text-indigo-600 focus:ring-indigo-500">
+            <span class="text-xs sm:text-sm text-slate-700 font-medium">${opt}</span>
+          </label>
+        `).join('');
+
+        card.innerHTML = `
+          <h3 class="font-bold text-slate-900 text-sm sm:text-base">${q.q}</h3>
+          <div class="space-y-2">${optionsHTML}</div>
+          <div id="quiz-exp-${qIndex}" class="hidden p-3 rounded-lg text-xs font-medium border"></div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectQuizOption(qIndex, oIndex) {
+      userQuizAnswers[qIndex] = oIndex;
+      const q = examQuestions[qIndex];
+      const expEl = document.getElementById(`quiz-exp-${qIndex}`);
+
+      // Reset options visual
+      q.options.forEach((_, idx) => {
+        const el = document.getElementById(`opt-card-${qIndex}-${idx}`);
+        el.className = 'flex items-center space-x-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition';
+      });
+
+      const selectedEl = document.getElementById(`opt-card-${qIndex}-${oIndex}`);
+      expEl.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-900', 'border-emerald-200', 'bg-red-50', 'text-red-900', 'border-red-200');
+
+      if (oIndex === q.correct) {
+        selectedEl.className = 'flex items-center space-x-3 p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 cursor-pointer transition';
+        expEl.classList.add('bg-emerald-50', 'text-emerald-900', 'border-emerald-200');
+        expEl.innerHTML = `<strong>✅ ¡Respuesta Correcta!</strong> ${q.exp}`;
+      } else {
+        selectedEl.className = 'flex items-center space-x-3 p-3 rounded-xl border-2 border-red-500 bg-red-50 cursor-pointer transition';
+        expEl.classList.add('bg-red-50', 'text-red-900', 'border-red-200');
+        expEl.innerHTML = `<strong>❌ Incorrecto.</strong> ${q.exp}`;
+      }
+
+      updateQuizScore();
+    }
+
+    function updateQuizScore() {
+      let score = 0;
+      examQuestions.forEach((q, idx) => {
+        if (userQuizAnswers[idx] === q.correct) score++;
+      });
+      document.getElementById('quiz-score-display').textContent = `${score} / ${examQuestions.length}`;
+    }
+
+    function resetQuiz() {
+      userQuizAnswers = {};
+      document.getElementById('quiz-score-display').textContent = `0 / ${examQuestions.length}`;
+      renderExamQuiz();
+    }
+  </script>
+</body>
+</html>
